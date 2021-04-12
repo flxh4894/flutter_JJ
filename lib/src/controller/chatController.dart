@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_get/src/repository/chatRepository.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ import 'package:http/http.dart' as http;
 class ChatController extends GetxController {
   final ScrollController scrollController = ScrollController();
   final ChatRepository _chatRepository = ChatRepository();
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   RxList<Map<String, dynamic>> chatList = <Map<String, dynamic>>[].obs;
   RxMap<String, dynamic> chatIndex = <String, dynamic>{}.obs;
@@ -44,7 +46,6 @@ class ChatController extends GetxController {
     } else {
       print('Request failed with status: ${response.statusCode}.');
     }
-
   }
 
   // 채팅 내용 더 불러오기
@@ -56,32 +57,43 @@ class ChatController extends GetxController {
   }
 
   // 패치 데이터 (채팅방 진입시 1번)
-  void fetchMessage(String roomName) async {
-    if(flag){
-      tes[roomName] = await _chatRepository.getMessage(roomName);
-      flag = false;
-    }
+  void fetchMessage(String roomName) async{
+    var data2 = await firestore.collection('chat').doc(roomName).collection('message').get();
+    List<Map<String, dynamic>> ok = data2.docs.map((element) => element.data() ).toList();
+    tes[roomName] = ok;
   }
+
 
   // 보낼때
   void onEmitMessage(String roomName, Map<String, dynamic> input) async {
     // 1. 서버에 보낸다. (소켓)
-    print('$roomName 으로 $input 데이터를 보냄');
+
+    final index = DateTime.now().microsecondsSinceEpoch.toString();
+    DocumentReference messageRef = firestore.collection('chat').doc(roomName).collection('message').doc(index);
+    DocumentReference userRef = firestore.collection('users').doc(input['sendUser']);
+    messageRef.set(input)
+        .then((value) => {
+          userRef.set({
+            'read': index,
+            'lastIndex': index
+          }).then((value) => print("추가 성공"))
+    });
+
     await Future.delayed(Duration(microseconds: 200), () => print('서버에 메세지 전달함.'));
   }
 
   // 받을때
   void onMessage(String roomName, Map<String, dynamic> input) async {
     // 1. 메세지가 서버에서 넘어온다 (Socket.on)
+
     // 보낸사람, 메세지, 인덱스 ( 방에 참여한 상태라면 마지막 인덱스 업데이트)
     await Future.delayed(Duration(microseconds: 200), () => print('서버에서 메세지 도착.'));
     // 2. 로컬스토리지에 저장한다. (메세지)
     // 3.
     _chatRepository.setMessage(roomName, input, myIndex, 200);
-    tes[roomName] = await _chatRepository.getMessage(roomName);
-
-    print('인덱스 업데이트 $myIndex 실제로는 해당 로직 없어요.');
-    myIndex++;
+    var list = tes[roomName];
+    list.add(input);
+    tes[roomName] = list;
   }
 }
 

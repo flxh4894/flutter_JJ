@@ -25,7 +25,7 @@ class ChatList extends StatelessWidget {
         () => ListView.separated(
           controller: chatController.scrollController,
           physics: AlwaysScrollableScrollPhysics(),
-          itemCount: chatList.length + 1,
+          itemCount: chatList.length,
           itemBuilder: (context, index) {
 
             if (index == chatList.length) {

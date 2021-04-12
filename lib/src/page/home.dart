@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_get/src/controller/homeController.dart';
+import 'package:flutter_get/src/page/auth/login.dart';
 import 'package:flutter_get/src/page/itemDetail.dart';
 import 'package:flutter_get/src/utils/dataUtils.dart';
 import 'package:flutter_get/styles/style.dart';
@@ -31,7 +33,7 @@ class Home extends StatelessWidget {
           ),
       ),
       actions: [
-        IconButton(icon: Icon(Icons.search), onPressed: () {}),
+        IconButton(icon: Icon(Icons.search), onPressed: () {FirebaseAuth.instance.signOut(); Get.to(() => Login());}),
         IconButton(icon: Icon(Icons.tune), onPressed: () {}),
         IconButton(icon: SvgPicture.asset("assets/svg/bell.svg", width: 22,),
             onPressed: () {}),

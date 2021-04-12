@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_get/src/controller/chatController.dart';
 import 'package:flutter_get/src/page/components/chat/chatBubble.dart';
@@ -11,11 +12,13 @@ class ChattingRoom extends StatefulWidget {
 }
 
 class _ChattingRoomState extends State<ChattingRoom> {
+
   final ChatController chatController = ChatController();
   final ScrollController listScrollController = ScrollController();
   final TextEditingController textController = TextEditingController();
   final String roomName = Get.arguments as String;
   final ChatRepository chatRepository = ChatRepository();
+
 
   @override
   void initState() {
@@ -147,13 +150,13 @@ class _ChattingRoomState extends State<ChattingRoom> {
               // 나중에 서버로 전송 username 은 토큰에서 내가 보낼껀 데이터만 보내면 됨
               String name = 'dowon';
               var data = {
-                'chatid': 124,
                 'sendUser': name,
                 'text': textController.text,
-                'date': '2021-04-11 23:20'
+                'date': DateTime.now().toString()
               };
               chatController.onEmitMessage(roomName, data);
               chatController.onMessage(roomName, data); // 받은거지만 데이터 전달하는걸로 표현
+
               listScrollController.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
               textController.clear();
             }

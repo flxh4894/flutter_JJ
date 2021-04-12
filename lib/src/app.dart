@@ -1,3 +1,4 @@
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_get/src/controller/appController.dart';
 import 'package:flutter_get/src/page/chat/chatlist.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class App extends GetView<AppController> {
+
   Widget _body() {
     int index = controller.currentIndex.value;
     switch (Menu.values[index]) {
@@ -64,11 +66,41 @@ class App extends GetView<AppController> {
 
   @override
   Widget build(BuildContext context) {
+    // var users = FirebaseFirestore.instance.collection('chat').doc('appleRoom').collection('message').orderBy('date').limitToLast(1);
     return Obx(
-      () => Scaffold(
+          () => Scaffold(
         body: _body(),
         bottomNavigationBar: _bottomNavigation(),
       ),
     );
+    // return StreamBuilder(
+    //   stream: users.snapshots(),
+    //   builder: (context, snapshot) {
+    //
+    //     if(snapshot.hasError){
+    //       print('에러다');
+    //       return Container(
+    //         child: Center(
+    //           child: Text('에러'),
+    //         ),
+    //       );
+    //     }
+    //
+    //     if(snapshot.connectionState == ConnectionState.waiting){
+    //       print('기다리는중');
+    //       return Container(
+    //         child: Center(
+    //           child: Text('읽는중'),
+    //         ),
+    //       );
+    //     }
+    //     return Obx(
+    //           () => Scaffold(
+    //         body: _body(),
+    //         bottomNavigationBar: _bottomNavigation(),
+    //       ),
+    //     );
+    //   },
+    // );
   }
 }
