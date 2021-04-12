@@ -1,42 +1,19 @@
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_get/src/repository/chatRepository.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
-class ChatController extends GetxService {
+class ChatController extends GetxController {
   final ScrollController scrollController = ScrollController();
+  final ChatRepository _chatRepository = ChatRepository();
 
   RxList<Map<String, dynamic>> chatList = <Map<String, dynamic>>[].obs;
-  RxMap<String, dynamic> tes = <String, dynamic>{
-    'appleRoom' : {
-      'lastReadChat': 120,
-      'lastReceiveChat': 124,
-      'list' : [
-        {'chatid': 120, 'sendUser':'dowon', 'text': '내가 만들어본 채팅 내용이야', 'date': '2021-04-11 23:10'},
-        {'chatid': 120, 'sendUser':'dowon', 'text': '내가 만들어본 채팅 내용이야', 'date': '2021-04-11 23:10'},
-        {'chatid': 121, 'sendUser':'supersexy', 'text': '다행이다 빈센조가 끝난게 아니라서 ㅎ.ㅎ', 'date': '2021-04-11 23:10'},
-      ]
-    },
-    'samsungRoom' : {
-      'lastReadChat': 120,
-      'lastReceiveChat': 124,
-      'list' : [
-        {'chatid': 120, 'sendUser':'dowon', 'text': '안녕하세요 이런식으로 채팅방이 구성이 됩니다.', 'date': '2021-04-11 23:10'},
-        {'chatid': 120, 'sendUser':'supersexy', 'text': '아, 네 안녕하세요 반갑습니다.', 'date': '2021-04-11 23:10'},
-        {'chatid': 121, 'sendUser':'dowon', 'text': '호우 홀리 쉣~~~', 'date': '2021-04-11 23:10'},
-      ]
-    }
-  }.obs;
-
-
-  RxMap<String, dynamic> chatting = <String, dynamic>{
-      'supersexy': [
-        {'chatid': 120, 'sendUser':'dowon', 'text': '내가 만들어본 채팅 내용이야 ㅅㅂ', 'date': '2021-04-11 23:10'},
-        {'chatid': 120, 'sendUser':'dowon', 'text': '내가 만들어본 채팅 내용이야', 'date': '2021-04-11 23:10'},
-        {'chatid': 121, 'sendUser':'supersexy', 'text': '다행이다 빈센조가 끝난게 아니라서 ㅎ.ㅎ', 'date': '2021-04-11 23:10'},
-      ]
-    }.obs;
+  RxMap<String, dynamic> chatIndex = <String, dynamic>{}.obs;
+  RxMap<String, dynamic> tes = <String, dynamic>{}.obs;
+  int myIndex = 100;
+  bool flag = true;
 
   @override
   void onInit() {
@@ -46,15 +23,17 @@ class ChatController extends GetxService {
     super.onInit();
   }
 
+  // 스크롤 이벤트
   void _addScrollEvent() {
     scrollController.addListener(() async {
       if (scrollController.position.pixels ==
           scrollController.position.maxScrollExtent) {
-        _getChatList();
+        // _getChatList();
       }
     });
   }
 
+  // 채팅 리스트 불러오기
   void _getChatList() async {
     var url =
     Uri.https('jsonplaceholder.typicode.com', '/photos', {'_limit': '10'});
@@ -65,36 +44,44 @@ class ChatController extends GetxService {
     } else {
       print('Request failed with status: ${response.statusCode}.');
     }
-  }
-
-  void refreshChatList() {
 
   }
 
-  Future readMoreChatHistory() async {
-    Future.delayed(Duration(seconds: 1), () => print('서버에서 불러왔어요'));
-    List<Map<String, dynamic>> addData = [
-      {'chatid': 120, 'sendUser':'dowon', 'text': '추가된 데이터 123', 'date': '2021-04-11 23:10'},
-      {'chatid': 120, 'sendUser':'dowon', 'text': '메이플 스토리', 'date': '2021-04-11 23:10'},
-      {'chatid': 120, 'sendUser':'dowon', 'text': '내가바로 리니지다', 'date': '2021-04-11 23:10'},
-    ];
-
-    addData.addAll(chatting['supersexy']);
-
-    chatting['supersexy'] = addData;
+  // 채팅 내용 더 불러오기
+  Future readMoreChatHistory(String roomName) async {
+    print('${tes[roomName][0]['chatid']} 보다 작은 채팅ID를 20개씩 가지고 올거에요.');
+    // 1. 로컬에 저장된 데이터 중 맨 처음 채팅 ID를 가지고 온다.
+    // 2. 채팅아이디를 가지고 그거보다 더 작은 채팅아이디를 20개 단위로 불러온다.
+    // 3. 불러온 채팅 데이터를 로컬스토리지에 맨 앞쪽으로 저장한다.
   }
 
-  Future addChatting(Map<String, dynamic> input) async {
-    List<Map<String, dynamic>> addData = chatting['supersexy'];
-    addData.add(input);
-    chatting['supersexy'] = addData;
+  // 패치 데이터 (채팅방 진입시 1번)
+  void fetchMessage(String roomName) async {
+    if(flag){
+      tes[roomName] = await _chatRepository.getMessage(roomName);
+      flag = false;
+    }
   }
 
-  void newAddChatting(String roomName, Map<String, dynamic> input) {
-    Map<String, dynamic> newArray = tes[roomName];
-    newArray['list'].add(input);
-
-    tes[roomName] = newArray;
+  // 보낼때
+  void onEmitMessage(String roomName, Map<String, dynamic> input) async {
+    // 1. 서버에 보낸다. (소켓)
+    print('$roomName 으로 $input 데이터를 보냄');
+    await Future.delayed(Duration(microseconds: 200), () => print('서버에 메세지 전달함.'));
   }
 
+  // 받을때
+  void onMessage(String roomName, Map<String, dynamic> input) async {
+    // 1. 메세지가 서버에서 넘어온다 (Socket.on)
+    // 보낸사람, 메세지, 인덱스 ( 방에 참여한 상태라면 마지막 인덱스 업데이트)
+    await Future.delayed(Duration(microseconds: 200), () => print('서버에서 메세지 도착.'));
+    // 2. 로컬스토리지에 저장한다. (메세지)
+    // 3.
+    _chatRepository.setMessage(roomName, input, myIndex, 200);
+    tes[roomName] = await _chatRepository.getMessage(roomName);
+
+    print('인덱스 업데이트 $myIndex 실제로는 해당 로직 없어요.');
+    myIndex++;
+  }
 }
+

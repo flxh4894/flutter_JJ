@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_get/src/controller/chatController.dart';
 import 'package:flutter_get/src/page/components/chat/chatBubble.dart';
+import 'package:flutter_get/src/repository/chatRepository.dart';
 import 'package:flutter_get/styles/style.dart';
 import 'package:get/get.dart';
 
@@ -14,6 +15,7 @@ class _ChattingRoomState extends State<ChattingRoom> {
   final ScrollController listScrollController = ScrollController();
   final TextEditingController textController = TextEditingController();
   final String roomName = Get.arguments as String;
+  final ChatRepository chatRepository = ChatRepository();
 
   @override
   void initState() {
@@ -22,7 +24,7 @@ class _ChattingRoomState extends State<ChattingRoom> {
           listScrollController.position.maxScrollExtent) {
         await new Future.delayed(const Duration(milliseconds: 500));
         print('새로고침중');
-        chatController.readMoreChatHistory();
+        chatController.readMoreChatHistory(roomName);
       }
     });
     super.initState();
@@ -95,9 +97,9 @@ class _ChattingRoomState extends State<ChattingRoom> {
   }
 
   Widget _buildMessage() {
-
     final String user = 'supersexy';
-    final List<Map<String, dynamic>> chatData = chatController.tes[roomName]['list'];
+    final List<Map<String, dynamic>> chatData = chatController.tes[roomName];
+
     return Flexible(
       child: ListView.builder(
         padding: EdgeInsets.all(10.0),
@@ -143,19 +145,15 @@ class _ChattingRoomState extends State<ChattingRoom> {
           IconButton(icon: Icon(Icons.send, color: Colors.blue,), onPressed: () {
             if(textController.text != '') {
               // 나중에 서버로 전송 username 은 토큰에서 내가 보낼껀 데이터만 보내면 됨
-              String name = chatController.tes[roomName]['list'].length % 2 == 0 ? 'dowon' : 'supersexy';
-              chatController.newAddChatting(roomName, {
+              String name = 'dowon';
+              var data = {
                 'chatid': 124,
                 'sendUser': name,
                 'text': textController.text,
                 'date': '2021-04-11 23:20'
-              });
-              // chatController.addChatting({
-              //   'chatid': 124,
-              //   'sendUser': name,
-              //   'text': textController.text,
-              //   'date': '2021-04-11 23:20'
-              // });
+              };
+              chatController.onEmitMessage(roomName, data);
+              chatController.onMessage(roomName, data); // 받은거지만 데이터 전달하는걸로 표현
               listScrollController.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
               textController.clear();
             }
@@ -167,6 +165,7 @@ class _ChattingRoomState extends State<ChattingRoom> {
 
   @override
   Widget build(BuildContext context) {
+    chatController.fetchMessage(roomName);
     return GestureDetector(
       onTap: (){
         FocusScopeNode currentFocus = FocusScope.of(context);
