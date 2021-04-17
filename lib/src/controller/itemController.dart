@@ -1,63 +1,67 @@
-
 import 'dart:convert';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_get/src/repository/authRepository.dart';
 import 'package:get/get.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// ignore: non_constant_identifier_names
 final String WATCHLIST = 'watchlist';
 
 class ItemController extends GetxController {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
+  final Logger logger = Logger(
+    printer: PrettyPrinter(),
+  );
+  final AuthRepository authRepository = AuthRepository();
+  final String itemId;
+  final String seller;
+  
   RxInt slideIndex = 0.obs;
   RxBool isWatchlist = false.obs;
+  RxBool isMe = false.obs;
+  String userId;
   
+  // 클래스 초기화
+  ItemController({this.itemId, this.seller});
+
   void setSlideIndex(int index) {
     slideIndex(index);
   }
 
-  Future addWatchlist(String cid)async {
-    final SharedPreferences prefs = await _prefs;
-    List<String> list = getSharedData(prefs);
-    if(list.length == 0){
-      list= [cid];
-    } else {
-      list.add(cid);
-    }
-    prefs.setString(WATCHLIST, jsonEncode(list));
+  @override
+  void onInit() {
+    init();
+    super.onInit();
   }
 
-  Future removeWatchlist(String cid)async {
-    final SharedPreferences prefs = await _prefs;
-    List<String> list = getSharedData(prefs);
-
-    list.removeAt(list.indexOf(cid));
-    prefs.setString(WATCHLIST, jsonEncode(list));
-
-    //삽질코드
-    // List<String> newList = [];
-    // list.forEach((element) {
-    //   if(element != cid){
-    //     newList.add(element);
-    //   }
-    // });
+  void init() async{
+    userId = await authRepository.getUserId();
+    itemUserCheck();
+    getWatchlistNew();
   }
 
-  Future<bool> getWatchlist(String cid)async {
-    final SharedPreferences prefs = await _prefs;
-    final List<String> list = getSharedData(prefs);
-
-    if(list.indexOf(cid) != -1) {
-      return true;
-    }
-    return false;
+  // 파는사람이 나인지 아닌지.
+  void itemUserCheck() async {
+    final itemSeller = await authRepository.getUserId() == seller;
+    logger.d('판매자 : $itemSeller');
+    isMe(itemSeller);
   }
-  
-  List<String> getSharedData(SharedPreferences prefs) {
-    final String jsonString = prefs.getString(WATCHLIST);
-    if(jsonString == null) {
-      return [];
+
+  void getWatchlistNew() async {
+    logger.d('아이템아이디 $itemId');
+    var watchlist = await _fireStore.collection('watchlist').doc(userId).collection('list').doc(itemId).get();
+    var data = watchlist.data();
+    if(data == null) {
+      isWatchlist(false);
+      return;
     }
-    return jsonDecode(jsonString).cast<String>();
+    isWatchlist(data['status']);
+  }
+
+  void setWatchlistNew(bool status) async {
+    var watchRef = _fireStore.collection('watchlist').doc(userId).collection('list').doc(itemId);
+    watchRef.set({ 'status' : status });
+
+    isWatchlist(status);
   }
 }

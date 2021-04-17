@@ -2,23 +2,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_get/src/controller/chatController.dart';
 import 'package:get/get.dart';
-
 import 'chatting.dart';
 
 class ChatList extends StatelessWidget {
   final ChatController chatController = Get.put(ChatController());
-  final double listHeight = 70;
+  final double listHeight = 50;
   final double paddingHorizontal = 16;
 
   Widget _appbar() {
     return AppBar(
-      title: Text('채팅'),
+      title: Text(chatController.userId),
       elevation: 1,
     );
   }
 
   Widget _body() {
-    List<Map<String, dynamic>> chatList = chatController.chatList;
+    List<Chatting> chatList = chatController.chatList;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: paddingHorizontal),
       child: Obx(
@@ -41,22 +40,23 @@ class ChatList extends StatelessWidget {
               }
             }
 
-            final String rommName = index.isOdd ? 'appleRoom' : 'samsungRoom';
             return Container(
               padding: EdgeInsets.symmetric(vertical: 15),
               child: GestureDetector(
                 onTap: (){
-                  Get.to(() => ChattingRoom(), transition: Transition.rightToLeftWithFade, arguments: rommName);},
+                  chatController.setUnreadZero(index);
+                  Get.to(() => ChattingRoom(), transition: Transition.rightToLeftWithFade, arguments: chatList[index].roomId.toString());},
                 behavior: HitTestBehavior.opaque,
                 child: Row(
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(listHeight/2),
                       child: FadeInImage.assetNetwork(
-                        image: chatList[index]['thumbnailUrl'],
+                        image: "https://i.pinimg.com/originals/6c/15/b0/6c15b0166c044974d4e4e9234f881f92.jpg",
                         placeholder: "assets/images/common/loading.gif",
                         width: listHeight,
                         height: listHeight,
+                        fit: BoxFit.cover,
                       ),
                     ),
                     SizedBox(width: 10,),
@@ -67,11 +67,11 @@ class ChatList extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: <Widget>[
-                            Text('우주미남도원',
+                            Text(chatList[index].nickname,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                             ),
-                            Text(chatList[index]['title'],
+                            Text(chatList[index].lastMsg,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 15),
                             ),
@@ -79,14 +79,16 @@ class ChatList extends StatelessWidget {
                         ),
                       ),
                     ),
+                    Text(chatList[index].unreadCount == 0 ? '' : chatList[index].unreadCount.toString(), style: TextStyle(color: Colors.red),),
                     SizedBox(width: 10,),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: FadeInImage.assetNetwork(
-                        image: chatList[index]['thumbnailUrl'],
+                        image: "https://i.pinimg.com/originals/6c/15/b0/6c15b0166c044974d4e4e9234f881f92.jpg",
                         placeholder: "assets/images/common/loading.gif",
                         width: listHeight,
                         height: listHeight,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ],
@@ -107,6 +109,9 @@ class ChatList extends StatelessWidget {
     return Scaffold(
       appBar: _appbar(),
       body: _body(),
+      // body: Container(
+      //   child: Text(chatController.chatList[0].roomId),
+      // )
     );
   }
 }

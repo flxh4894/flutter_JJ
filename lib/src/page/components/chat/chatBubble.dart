@@ -10,13 +10,20 @@ class ChatBubble extends StatelessWidget {
   final SendUser sendUser;
   final String userId;
   final String text;
-  ChatBubble({this.sendUser, this.text, this.userId});
+  final bool read;
+  ChatBubble({this.sendUser, this.text, this.userId, this.read});
 
   Widget _myBubble(double width) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text('오후 10:18', style: TextStyle(fontSize: 14),),
+        Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              read ? Text('') : Text('1',style: TextStyle(color: Colors.blue),),
+              Text('오후 10:18', style: TextStyle(fontSize: 14),),
+            ]
+        ),
         Container(
           constraints: BoxConstraints(maxWidth: width * 0.65),
           decoration: BoxDecoration(
@@ -47,7 +54,7 @@ class ChatBubble extends StatelessWidget {
           children: [
             SizedBox(width: 10,),
             Container(
-              constraints: BoxConstraints(maxWidth: width * 0.60),
+              constraints: BoxConstraints(maxWidth: width * 0.55),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 color: Colors.grey.shade200,
@@ -56,7 +63,13 @@ class ChatBubble extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Text(text, style: TextStyle(fontSize: 16),),
             ),
-            Text('오후 10:18', style: TextStyle(fontSize: 14),),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  read ? Text('') : Text('1',style: TextStyle(color: Colors.blue),),
+                  Text('오후 10:18', style: TextStyle(fontSize: 14),),
+                ]
+            ),
           ]
         ),
       ]

@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_get/src/controller/chatController.dart';
+import 'package:flutter_get/src/controller/chattingController.dart';
 import 'package:flutter_get/src/page/components/chat/chatBubble.dart';
 import 'package:flutter_get/src/repository/chatRepository.dart';
 import 'package:flutter_get/styles/style.dart';
@@ -13,7 +14,8 @@ class ChattingRoom extends StatefulWidget {
 
 class _ChattingRoomState extends State<ChattingRoom> {
 
-  final ChatController chatController = ChatController();
+  final ChatController chatController = Get.find<ChatController>();
+  final ChattingController chattingController = Get.put(ChattingController(roomId: Get.arguments));
   final ScrollController listScrollController = ScrollController();
   final TextEditingController textController = TextEditingController();
   final String roomName = Get.arguments as String;
@@ -47,7 +49,7 @@ class _ChattingRoomState extends State<ChattingRoom> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('우주미남도원', style: TextStyle(fontSize: 16),),
+                  Text(chatController.userId, style: TextStyle(fontSize: 16),),
                   Text('Online',  style: TextStyle(fontSize: 14),)
                 ],
               )
@@ -83,7 +85,7 @@ class _ChattingRoomState extends State<ChattingRoom> {
               Text('AMD Ryzen 5600X',
                 style: TextStyle(fontSize: 16),
               ),
-              Text('560,000원',
+              Text('560,000원 ${chattingController.myChatData.length.toString()}',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ],
@@ -100,8 +102,8 @@ class _ChattingRoomState extends State<ChattingRoom> {
   }
 
   Widget _buildMessage() {
-    final String user = 'supersexy';
-    final List<Map<String, dynamic>> chatData = chatController.tes[roomName];
+    final String user = chatController.userId;
+    final List myChat = chattingController.myChatData;
 
     return Flexible(
       child: ListView.builder(
@@ -109,7 +111,7 @@ class _ChattingRoomState extends State<ChattingRoom> {
         controller: listScrollController,
         reverse: true,
         shrinkWrap: true,
-        itemCount: chatData == null ? 0 : chatData.length,
+        itemCount: myChat == null ? 0 : myChat.length,
         itemBuilder: (context, index) {
           // if (index == chatData.length - 1) {
           //     return Center(
@@ -119,11 +121,16 @@ class _ChattingRoomState extends State<ChattingRoom> {
           //         )
           //     );
           // }
-          return chatData[chatData.length-index-1]['sendUser'] == user ?  ChatBubble(sendUser: SendUser.ME, text: chatData[chatData.length-index-1]['text'],)
-              :  ChatBubble(sendUser: SendUser.YOU, text: chatData[chatData.length-index-1]['text'], userId: chatData[chatData.length-index-1]['sendUser'],);
+
+          return myChat[myChat.length-index-1]['sendUser'] == user ?  ChatBubble(sendUser: SendUser.ME, text: myChat[myChat.length-index-1]['text'], read: myChat[myChat.length-index-1]['read'])
+              :  youBubble(myChat, index);
         }
       )
     );
+  }
+
+  Widget youBubble (myChat, index) {
+    return ChatBubble(sendUser: SendUser.YOU, text: myChat[myChat.length-index-1]['text'], userId: myChat[myChat.length-index-1]['sendUser'], read: myChat[myChat.length-index-1]['read'],);
   }
 
   Widget _buildInput() {
@@ -147,15 +154,12 @@ class _ChattingRoomState extends State<ChattingRoom> {
           ),
           IconButton(icon: Icon(Icons.send, color: Colors.blue,), onPressed: () {
             if(textController.text != '') {
-              // 나중에 서버로 전송 username 은 토큰에서 내가 보낼껀 데이터만 보내면 됨
-              String name = 'dowon';
               var data = {
-                'sendUser': name,
+                'roomId': Get.arguments.toString(),
                 'text': textController.text,
                 'date': DateTime.now().toString()
               };
               chatController.onEmitMessage(roomName, data);
-              chatController.onMessage(roomName, data); // 받은거지만 데이터 전달하는걸로 표현
 
               listScrollController.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
               textController.clear();
@@ -168,7 +172,6 @@ class _ChattingRoomState extends State<ChattingRoom> {
 
   @override
   Widget build(BuildContext context) {
-    chatController.fetchMessage(roomName);
     return GestureDetector(
       onTap: (){
         FocusScopeNode currentFocus = FocusScope.of(context);

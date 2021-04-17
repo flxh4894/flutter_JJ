@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ItemDetailInfo extends StatelessWidget {
-  final Map<String, String> data;
+  final Map<String, dynamic> data;
 
   ItemDetailInfo({this.data});
 

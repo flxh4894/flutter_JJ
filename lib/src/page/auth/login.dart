@@ -52,6 +52,7 @@ class Login extends StatelessWidget {
         ));
   }
 
+  // 로그인 진행
   void _login(BuildContext context) async {
     if (!_formKey.currentState.validate()) {
       return;
@@ -61,7 +62,7 @@ class Login extends StatelessWidget {
           email: _emailController.text,
           password: _passwordController.text
       );
-      print(userCredential);
+
       if(userCredential != null) {
         _authController.updateProfile();
         Get.offAll(() => App());
@@ -105,7 +106,7 @@ class Login extends StatelessWidget {
             style: TextStyle(color: Colors.white, fontSize: 20),
           ),
           onPressed: () {
-            _login(context);
+            _authController.login(_emailController.text, _passwordController.text);
           },
           style: ElevatedButton.styleFrom(
               primary: Colors.blue,
@@ -118,6 +119,7 @@ class Login extends StatelessWidget {
   }
 
   Widget _inputForm(Size size) {
+
     return Padding(
       padding: EdgeInsets.all(size.width * 0.05),
       child: Card(

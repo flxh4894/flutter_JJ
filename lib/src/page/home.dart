@@ -8,8 +8,9 @@ import 'package:flutter_get/styles/style.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 
+
 class Home extends StatelessWidget {
-  final HomeController controller = Get.put(HomeController());
+  final HomeController controller = Get.find<HomeController>();
 
   Widget _appbar() {
     return AppBar(
@@ -33,7 +34,10 @@ class Home extends StatelessWidget {
           ),
       ),
       actions: [
-        IconButton(icon: Icon(Icons.search), onPressed: () {FirebaseAuth.instance.signOut(); Get.to(() => Login());}),
+        IconButton(icon: Icon(Icons.search), onPressed: () {
+          FirebaseAuth.instance.signOut();
+          Get.offAll(() => Login());
+        }),
         IconButton(icon: Icon(Icons.tune), onPressed: () {}),
         IconButton(icon: SvgPicture.asset("assets/svg/bell.svg", width: 22,),
             onPressed: () {}),
@@ -76,7 +80,7 @@ class Home extends StatelessWidget {
             return GestureDetector(
               onTap: () => {
                 Get.to(() => ItemDetailView(),
-                    arguments: controller.datas[index]
+                    arguments: controller.datas[index] as Map<String, dynamic>
                     )
               },
               child: Container(
@@ -88,7 +92,7 @@ class Home extends StatelessWidget {
                               ClipRRect(
                                   borderRadius: BorderRadius.all(Radius.circular(10)),
                                   child: Hero(tag: controller.datas[index]['cid'],
-                                  child: Image.asset(controller.datas[index]['image'], width: 100, height: 100,))
+                                  child: Image.asset('assets/images/${controller.datas[index]['image']}', width: 100, height: 100,))
                               ),
                               Expanded(
                                 child: Container(

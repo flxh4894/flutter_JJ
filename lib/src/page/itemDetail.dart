@@ -1,6 +1,7 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_get/src/controller/chatController.dart';
 import 'package:flutter_get/src/controller/itemController.dart';
 import 'package:flutter_get/src/page/components/propensityLevel.dart';
 import 'package:flutter_get/src/utils/dataUtils.dart';
@@ -17,8 +18,9 @@ class ItemDetailView extends StatefulWidget {
 }
 
 class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProviderStateMixin {
-  final ItemController itemController = Get.put(ItemController());
-  final Map<String, String> _dataInfo = Get.arguments;
+  final ItemController itemController = Get.put(ItemController(itemId: Get.arguments['cid'], seller: Get.arguments['sellUser']));
+  final ChatController chatController = ChatController();
+  final Map<String, dynamic> _dataInfo = Get.arguments;
   final ScrollController _scrollController = ScrollController();
 
   Size size;
@@ -26,11 +28,9 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
   double _scrollHeightAlpha = 0;
   AnimationController _animationController;
   Animation _colorTween;
-  bool _isWatchlist = false;
 
   @override
   void dispose() {
-    itemController.dispose();
     _scrollController.dispose();
     _animationController.dispose();
     super.dispose();
@@ -39,7 +39,7 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
   @override
   void initState() {
     for (int i = 0; i < 5; i++) {
-      imgList.add({"id": i.toString(), "url": Get.arguments['image']});
+      imgList.add({"id": i.toString(), "url": 'assets/images/${Get.arguments['image']}'});
     }
     _animationController = AnimationController(vsync: this);
     _colorTween = ColorTween(begin: Colors.white, end: Colors.black).animate(_animationController);
@@ -49,7 +49,6 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
         _animationController.value = _scrollHeightAlpha / 255;
       });
     });
-    getWatchlistState();
     super.initState();
   }
 
@@ -59,25 +58,12 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
     super.didChangeDependencies();
   }
 
-  Future getWatchlistState() async {
-    bool test = await itemController.getWatchlist(_dataInfo['cid']);
-    setState(() {
-      _isWatchlist = test;
-    });
-  }
 
   Future<void> _toggleWatchlist(bool status) async {
-    String cid = _dataInfo['cid'];
     if(status) {
-      itemController.removeWatchlist(cid);
-      setState(() {
-        _isWatchlist = false;
-      });
+      itemController.setWatchlistNew(false);
     } else {
-      itemController.addWatchlist(cid);
-      setState(() {
-        _isWatchlist = true;
-      });
+      itemController.setWatchlistNew(true);
     }
   }
 
@@ -159,7 +145,7 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
     return Stack(
       children: [
         Hero(
-          tag: Get.arguments['cid'],
+          tag: _dataInfo['cid'],
           child: CarouselSlider(
             items: imgList.map((element) {
               return Image.asset(element['url'],
@@ -234,30 +220,32 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
     );
   }
 
-  Widget _bottomBarWidget() {
+  Widget _bottomBarWidget(){
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
       height: 55,
       width: size.width,
       child: Row(
         children: [
-          IconButton(
-              icon: SizedBox(
-                height: 25,
-                width: 25,
-                child: SvgPicture.asset(
-                  _isWatchlist ?
-                  "assets/svg/heart_on.svg" :
-                  "assets/svg/heart_off.svg",
-                  color: Color(0xfff08f4f),
+          Obx(
+            () => IconButton(
+                icon: SizedBox(
+                  height: 25,
+                  width: 25,
+                  child: SvgPicture.asset(
+                    itemController.isWatchlist.value ?
+                    "assets/svg/heart_on.svg" :
+                    "assets/svg/heart_off.svg",
+                    color: Color(0xfff08f4f),
+                  ),
                 ),
-              ),
-              onPressed: () {
-                _toggleWatchlist(_isWatchlist);
-                final snackBarText = _isWatchlist ? '관심목록에 추가 되었습니다.' : '관심목록이 해제 되었습니다.';
-                final snackBar = SnackBar(content: Text(snackBarText), duration: Duration(milliseconds: 500),);
-                ScaffoldMessenger.of(context).showSnackBar(snackBar);
-              }),
+                onPressed: () {
+                  _toggleWatchlist(itemController.isWatchlist.value);
+                  final snackBarText = itemController.isWatchlist.value ? '관심목록에 추가 되었습니다.' : '관심목록이 해제 되었습니다.';
+                  final snackBar = SnackBar(content: Text(snackBarText), duration: Duration(milliseconds: 500),);
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                }),
+          ),
           VerticalDivider(
             color: Colors.black.withOpacity(0.5),
           ),
@@ -274,18 +262,31 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
             ],
           ),
           Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(5),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 7, horizontal: 13),
-                    color: Styles.primaryColor,
-                    child: Text('채팅으로 거래하기', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),),
-                  ),
+              child: Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    itemController.isMe.value == true ?
+                    Container(
+                      child: Text('판매상태만들기'),
+                    )
+                    :
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: GestureDetector(
+                        onTap: () {
+                          chatController.createChatRoom(_dataInfo['sellUser'], _dataInfo['cid']);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 7, horizontal: 13),
+                          color: Styles.primaryColor,
+                          child: Text('채팅으로 거래하기', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),),
+                        ),
+                      ),
+                    ),
+                  ]
                 ),
-              ])
+              )
           )
         ],
       ),
@@ -294,12 +295,11 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => Scaffold(
+    return Scaffold(
         extendBodyBehindAppBar: true,
         appBar: _appbar(),
-        body: _body(),
-        bottomNavigationBar: _bottomBarWidget()),
+        body: Obx (() => _body()),
+        bottomNavigationBar: _bottomBarWidget()
     );
   }
 }
