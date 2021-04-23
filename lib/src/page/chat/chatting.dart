@@ -1,8 +1,9 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_get/src/components/chat/chatBubble.dart';
 import 'package:flutter_get/src/controller/chatController.dart';
 import 'package:flutter_get/src/controller/chattingController.dart';
-import 'package:flutter_get/src/page/components/chat/chatBubble.dart';
+
 import 'package:flutter_get/src/repository/chatRepository.dart';
 import 'package:flutter_get/styles/style.dart';
 import 'package:get/get.dart';

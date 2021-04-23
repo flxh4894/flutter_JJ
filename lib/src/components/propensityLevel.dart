@@ -13,7 +13,7 @@ class PropensityLevel extends StatefulWidget {
 }
 
 class _PropensityLevelState extends State<PropensityLevel> {
-  final HomeController controller = Get.put(HomeController());
+  final HomeController controller = Get.find<HomeController>();
 
   final List<Color> lawfulColor = [
     Colors.red.withOpacity(1), // 1
@@ -88,7 +88,7 @@ class _PropensityLevelState extends State<PropensityLevel> {
       alignment: Alignment.centerRight,
       child: Column(children: <Widget>[
         Text(
-          "${DataUtils.calcNumFormat(_calcPropensityLevel(propensity))}"
+          "${DataUtils.calcNumFormat(_calcPropensityLevel(propensity)).replaceAll('원', '점')}"
           ,
           style: TextStyle(
               fontSize: 16,

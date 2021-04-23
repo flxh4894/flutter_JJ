@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_get/src/controller/homeController.dart';
 import 'package:flutter_get/src/page/auth/login.dart';
-import 'package:flutter_get/src/page/itemDetail.dart';
+import 'file:///E:/dev/flutter/flutter_get/lib/src/page/item/itemDetail.dart';
 import 'package:flutter_get/src/utils/dataUtils.dart';
 import 'package:flutter_get/styles/style.dart';
 import 'package:flutter_svg/svg.dart';
@@ -84,56 +84,63 @@ class Home extends StatelessWidget {
                     )
               },
               child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 10),
+                  padding: EdgeInsets.symmetric(vertical: 5),
                   child: GetBuilder<HomeController>(
                       builder: (_) =>
-                          Row(
+                          Column(
                             children: [
-                              ClipRRect(
-                                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                                  child: Hero(tag: controller.datas[index]['cid'],
-                                  child: Image.asset('assets/images/${controller.datas[index]['image']}', width: 100, height: 100,))
-                              ),
-                              Expanded(
-                                child: Container(
-                                  padding: EdgeInsets.only(left: 10),
-                                  height: 100,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        controller.datas[index]['title'],
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(fontSize: 15),
-                                      ),
-                                      SizedBox(height: 5),
-                                      Text(
-                                        controller.datas[index]['location'],
-                                        style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.4)),
-                                      ),
-                                      SizedBox(height: 5),
-                                      Text(
-                                        DataUtils.calcNumFormat(controller.datas[index]['price']),
-                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                                      ),
-                                      SizedBox(height: 5),
-                                      Expanded(
-                                        child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                            children: <Widget>[
-                                              SvgPicture.asset("assets/svg/heart_off.svg", width: 13, height: 13,),
-                                              SizedBox(width: 5,),
-                                              Text(
-                                                controller.datas[index]['likes'],
-                                              ),
-                                            ]
-                                        ),
-                                      )
-                                    ],
+                              Row(
+                                children: [
+                                  ClipRRect(
+                                      borderRadius: BorderRadius.all(Radius.circular(5)),
+                                      child: Hero(tag: controller.datas[index]['cid'],
+                                      // child: Image.asset('assets/images/${controller.datas[index]['image']}', width: 100, height: 100,))
+                                      child: Image.network(controller.datas[index]['image'], width: 100, height: 100, fit: BoxFit.cover,))
                                   ),
-                                ),
-                              )
-                            ],
+                                  Expanded(
+                                    child: Container(
+                                      padding: EdgeInsets.only(left: 10),
+                                      height: 100,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            controller.datas[index]['title'],
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(fontSize: 15),
+                                          ),
+                                          SizedBox(height: 5),
+                                          Text(
+                                            controller.datas[index]['location'],
+                                            style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.4)),
+                                          ),
+                                          SizedBox(height: 5),
+                                          Text(
+                                            DataUtils.calcNumFormat(controller.datas[index]['price']),
+                                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                          ),
+                                          SizedBox(height: 5),
+                                          Expanded(
+                                            child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                children: <Widget>[
+                                                  SvgPicture.asset("assets/svg/heart_off.svg", width: 13, height: 13,),
+                                                  SizedBox(width: 5,),
+                                                  Text(
+                                                    controller.datas[index]['likes'],
+                                                  ),
+                                                ]
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                              SizedBox(height: 10,),
+                              Divider()
+                            ]
                           )
                   )
               ),

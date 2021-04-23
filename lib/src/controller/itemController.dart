@@ -13,16 +13,18 @@ class ItemController extends GetxController {
     printer: PrettyPrinter(),
   );
   final AuthRepository authRepository = AuthRepository();
-  final String itemId;
+  final String itemDocId;
   final String seller;
+  final int itemId;
   
   RxInt slideIndex = 0.obs;
   RxBool isWatchlist = false.obs;
   RxBool isMe = false.obs;
+  RxString itemNm = ''.obs;
   String userId;
   
   // 클래스 초기화
-  ItemController({this.itemId, this.seller});
+  ItemController({this.itemDocId, this.seller, this.itemId});
 
   void setSlideIndex(int index) {
     slideIndex(index);
@@ -38,6 +40,7 @@ class ItemController extends GetxController {
     userId = await authRepository.getUserId();
     itemUserCheck();
     getWatchlistNew();
+    getItemName();
   }
 
   // 파는사람이 나인지 아닌지.
@@ -47,9 +50,16 @@ class ItemController extends GetxController {
     isMe(itemSeller);
   }
 
+  // 아이템 이름 가져오기
+  void getItemName() async {
+    var itemName = await _fireStore.collection('items').where('id', isEqualTo: itemId).get();
+    var docItemName = itemName.docs[0].data();
+    itemNm('[${docItemName['brand']}] ${docItemName['name']}');
+  }
+
+  // 관심목록에 등록이 된 아이템인지
   void getWatchlistNew() async {
-    logger.d('아이템아이디 $itemId');
-    var watchlist = await _fireStore.collection('watchlist').doc(userId).collection('list').doc(itemId).get();
+    var watchlist = await _fireStore.collection('watchlist').doc(userId).collection('list').doc(itemDocId).get();
     var data = watchlist.data();
     if(data == null) {
       isWatchlist(false);
@@ -59,7 +69,7 @@ class ItemController extends GetxController {
   }
 
   void setWatchlistNew(bool status) async {
-    var watchRef = _fireStore.collection('watchlist').doc(userId).collection('list').doc(itemId);
+    var watchRef = _fireStore.collection('watchlist').doc(userId).collection('list').doc(itemDocId);
     watchRef.set({ 'status' : status });
 
     isWatchlist(status);

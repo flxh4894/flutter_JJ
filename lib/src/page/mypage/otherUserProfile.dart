@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter_get/src/page/components/propensityLevel.dart';
+import 'package:flutter_get/src/components/propensityLevel.dart';
 import 'package:flutter_get/styles/style.dart';
 import 'package:get/get.dart';
 

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_get/src/controller/itemController.dart';
+import 'package:flutter_get/src/page/item/itemPriceChart.dart';
+import 'package:get/get.dart';
 
 class ItemDetailInfo extends StatelessWidget {
   final Map<String, dynamic> data;
+  final ItemController controller = Get.find<ItemController>();
 
   ItemDetailInfo({this.data});
 
@@ -13,6 +17,7 @@ class ItemDetailInfo extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(height: 5,),
+
           Text(
             itemInfo.title,
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -20,6 +25,12 @@ class ItemDetailInfo extends StatelessWidget {
           Text(
             "디지털/가전 · 22시간 전",
             style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          Row(
+             children: [
+              Expanded(child: Text(controller.itemNm.value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)) ),
+              TextButton(onPressed: () => Get.to(() => ItemPriceChart()), child: Text('현재시세'))
+            ]
           ),
           SizedBox(height: 15,),
           Text(
@@ -40,13 +51,15 @@ class ItemDetailInfo extends StatelessWidget {
 class ItemInfo {
   final String title;
   final String info;
+  final int itemId;
 
-  ItemInfo({this.info, this.title});
+  ItemInfo({this.info, this.title, this.itemId});
 
   factory ItemInfo.mapping(Map<String, dynamic> data) {
     return ItemInfo(
       title: data['title'] as String,
       info: data['info'] as String,
+      itemId: data['itemInfo'] as num
     );
   }
 }

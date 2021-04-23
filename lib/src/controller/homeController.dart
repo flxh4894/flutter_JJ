@@ -17,7 +17,7 @@ class HomeController extends GetxController{
   RxInt testNumb = 100.obs;
   RxInt pageIndex = 0.obs;
   RxString location = "이도원동".obs;
-  RxInt propensity = (32767).obs;
+  RxInt propensity = (5000).obs;
   RxInt listCount = 10.obs;
   RxString name = 'apple'.obs;
   RxBool initHome = false.obs;
@@ -46,28 +46,13 @@ class HomeController extends GetxController{
     });
   }
 
-  void makeItem () async {
-    CollectionReference itemRef = _fireStore.collection('sell_list');
-    final data = {
-      'category' : 2,
-      'date': DateTime.now(),
-      'deal_type': 3,
-      'deal_method': 3,
-      'images': ['ara-4.jpg', 'ora-2.jpg'],
-      'itemInfo': 15,
-      'price': 560000,
-      'sell_user': 'flxh4894@naver.com',
-      'title': '내가파는 아이템'
-    };
-    itemRef.add(data);
-  }
-
   void initItemList() async {
     var itemList = await _fireStore.collection('sell_list').orderBy('date', descending: true).limit(10).get();
     List<Map<String, dynamic>> list = itemList.docs.map((e) => {
         "cid": e.id.toString(),
         "image": e['images'][0],
         "title": e['title'],
+        "itemInfo": e['itemInfo'],
         "location": "서울특별시 공덕동",
         "price": e['price'].toString(),
         'sellUser': e['sell_user'],
@@ -83,15 +68,16 @@ class HomeController extends GetxController{
   }
 
   void setListCount() async {
-    listCount++;
-    datas.add({
-      "cid": "11",
-      "image": "assets/images/ara-3.jpg",
-      "title": "도짱이 추가함!!!",
-      "location": "제주 제주시 아라동",
-      "price": "130000",
-      "likes": "3"
-    });
+    print('추가액션');
+    // listCount++;
+    // datas.add({
+    //   "cid": "11",
+    //   "image": "assets/images/ara-3.jpg",
+    //   "title": "도짱이 추가함!!!",
+    //   "location": "제주 제주시 아라동",
+    //   "price": "130000",
+    //   "likes": "3"
+    // });
   }
 
   void setPropensity(int propensity){

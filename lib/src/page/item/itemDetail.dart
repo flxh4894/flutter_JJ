@@ -1,15 +1,17 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_get/src/page/components/propensityLevel.dart';
-import 'package:flutter_get/src/repository/watchlistRepository.dart';
+import 'package:flutter_get/src/components/itemDetailInfo.dart';
+import 'package:flutter_get/src/components/otherSellItems.dart';
+import 'package:flutter_get/src/components/propensityLevel.dart';
+import 'package:flutter_get/src/controller/chatController.dart';
+import 'package:flutter_get/src/controller/itemController.dart';
+
 import 'package:flutter_get/src/utils/dataUtils.dart';
+import 'package:flutter_get/styles/style.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import 'components/itemDetailInfo.dart';
-import 'components/otherSellItems.dart';
 
 class ItemDetailView extends StatefulWidget {
   @override
@@ -17,26 +19,29 @@ class ItemDetailView extends StatefulWidget {
 }
 
 class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProviderStateMixin {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  final ItemController itemController = Get.put(ItemController(itemDocId: Get.arguments['cid'], seller: Get.arguments['sellUser'], itemId: Get.arguments['itemInfo']));
+  final ChatController chatController = ChatController();
+  final Map<String, dynamic> _dataInfo = Get.arguments;
+  final ScrollController _scrollController = ScrollController();
+
   Size size;
-  int _current;
   List<Map<String, String>> imgList = [];
-  Map<String, String> _dataInfo = {};
-  String name;
-  ScrollController _scrollController;
   double _scrollHeightAlpha = 0;
   AnimationController _animationController;
   Animation _colorTween;
-  bool _isWatchItem = false;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
-    _current = 0;
     for (int i = 0; i < 5; i++) {
       imgList.add({"id": i.toString(), "url": Get.arguments['image']});
     }
-    _dataInfo = Get.arguments;
-    _scrollController = ScrollController();
     _animationController = AnimationController(vsync: this);
     _colorTween = ColorTween(begin: Colors.white, end: Colors.black).animate(_animationController);
     _scrollController.addListener(() {
@@ -45,7 +50,6 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
         _animationController.value = _scrollHeightAlpha / 255;
       });
     });
-    _getWatchlist();
     super.initState();
   }
 
@@ -55,25 +59,13 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
     super.didChangeDependencies();
   }
 
-  Future _getWatchlist() async {
-    WatchlistRepository().setWatchlist(Get.arguments);
-    final SharedPreferences prefs = await _prefs;
-    setState(() {
-      _isWatchItem = prefs.getBool('watchlist')?? false;
-    });
-  }
 
   Future<void> _toggleWatchlist(bool status) async {
-    final SharedPreferences prefs = await _prefs;
-
     if(status) {
-      prefs.remove('watchlist');
+      itemController.setWatchlistNew(false);
     } else {
-      prefs.setBool('watchlist', true);
+      itemController.setWatchlistNew(true);
     }
-    setState(() {
-      _isWatchItem = !status;
-    });
   }
 
   Future<Map<String, String>> getItemData() async {
@@ -150,14 +142,15 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
   }
 
   Widget _imageWithIndicator() {
+    int _current = itemController.slideIndex.value;
     return Stack(
       children: [
         Hero(
-          tag: Get.arguments['cid'],
+          tag: _dataInfo['cid'],
           child: CarouselSlider(
             items: imgList.map((element) {
-              return Image.asset(element['url'],
-                  width: size.width, fit: BoxFit.fill);
+              return Image.network(element['url'],
+                  width: size.width, fit: BoxFit.cover);
             }).toList(),
             options: CarouselOptions(
                 height: size.width,
@@ -165,9 +158,10 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
                 enableInfiniteScroll: false,
                 initialPage: 0,
                 onPageChanged: (index, reason) {
-                  setState(() {
-                    _current = index;
-                  });
+                  itemController.setSlideIndex(index);
+                  // setState(() {
+                  //   _current = index;
+                  // });
                 }),
           ),
         ),
@@ -221,36 +215,38 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
               Text(location),
             ],
           ),
-          Expanded(child: PropensityLevel())
+          Expanded(child: PropensityLevel(width: 90, height: 6,))
         ],
       ),
     );
   }
 
-  Widget _bottomBarWidget() {
+  Widget _bottomBarWidget(){
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
       height: 55,
       width: size.width,
       child: Row(
         children: [
-          IconButton(
-              icon: SizedBox(
-                height: 25,
-                width: 25,
-                child: SvgPicture.asset(
-                  _isWatchItem ?
-                  "assets/svg/heart_on.svg" :
-                  "assets/svg/heart_off.svg",
-                  color: Color(0xfff08f4f),
+          Obx(
+            () => IconButton(
+                icon: SizedBox(
+                  height: 25,
+                  width: 25,
+                  child: SvgPicture.asset(
+                    itemController.isWatchlist.value ?
+                    "assets/svg/heart_on.svg" :
+                    "assets/svg/heart_off.svg",
+                    color: Color(0xfff08f4f),
+                  ),
                 ),
-              ),
-              onPressed: () {
-                _toggleWatchlist(_isWatchItem);
-                final snackBarText = _isWatchItem ? '관심목록에 추가 되었습니다.' : '관심목록이 해제 되었습니다.';
-                final snackBar = SnackBar(content: Text(snackBarText), duration: Duration(milliseconds: 500),);
-                ScaffoldMessenger.of(context).showSnackBar(snackBar);
-              }),
+                onPressed: () {
+                  _toggleWatchlist(itemController.isWatchlist.value);
+                  final snackBarText = itemController.isWatchlist.value ? '관심목록에 추가 되었습니다.' : '관심목록이 해제 되었습니다.';
+                  final snackBar = SnackBar(content: Text(snackBarText), duration: Duration(milliseconds: 500),);
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                }),
+          ),
           VerticalDivider(
             color: Colors.black.withOpacity(0.5),
           ),
@@ -267,18 +263,31 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
             ],
           ),
           Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(5),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 7, horizontal: 13),
-                    color: Color(0xfff08f4f),
-                    child: Text('채팅으로 거래하기', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),),
-                  ),
+              child: Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    itemController.isMe.value == true ?
+                    Container(
+                      child: Text('판매상태만들기'),
+                    )
+                    :
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: GestureDetector(
+                        onTap: () {
+                          chatController.createChatRoom(_dataInfo['sellUser'], _dataInfo['cid']);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 7, horizontal: 13),
+                          color: Styles.primaryColor,
+                          child: Text('채팅으로 거래하기', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),),
+                        ),
+                      ),
+                    ),
+                  ]
                 ),
-              ])
+              )
           )
         ],
       ),
@@ -287,12 +296,11 @@ class _ItemDetailViewState extends State<ItemDetailView> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => Scaffold(
+    return Scaffold(
         extendBodyBehindAppBar: true,
         appBar: _appbar(),
-        body: _body(),
-        bottomNavigationBar: _bottomBarWidget()),
+        body: Obx (() => _body()),
+        bottomNavigationBar: _bottomBarWidget()
     );
   }
 }
